@@ -1,13 +1,28 @@
-import { useEffect, useState } from 'react';
-import { addNote, getAllNotes, deleteNote, type Note } from '@/lib/notesDB';
+import { useEffect, useState } from "react";
+import {
+  addNote,
+  getAllNotes,
+  deleteNote,
+  type Note,
+  clearAllNotes,
+} from "@/lib/notesDB";
 
 export function NoteSidebar() {
   const [notes, setNotes] = useState<Note[]>([]);
-  const [content, setContent] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
+  const [content, setContent] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
 
   useEffect(() => {
+    const today = new Date().toISOString().split("T")[0]; // e.g., "2025-07-03"
+    const lastUsed = localStorage.getItem("peaktopen:lastUsedDate");
+
+    if (lastUsed !== today) {
+      clearAllNotes().then(() => {
+        console.log("New day detected — notes cleared");
+        localStorage.setItem("peaktopen:lastUsedDate", today);
+      });
+    }
     (async () => {
       const storedNotes = await getAllNotes();
       setNotes(storedNotes);
@@ -23,14 +38,14 @@ export function NoteSidebar() {
     const fakeId = Date.now();
     await addNote(newNote);
     setNotes([...notes, { ...newNote, id: fakeId }]);
-    setContent('');
-    setStartTime('');
-    setEndTime('');
+    setContent("");
+    setStartTime("");
+    setEndTime("");
   }
 
   async function handleDelete(id: number) {
     await deleteNote(id);
-    setNotes(notes.filter(note => note.id !== id));
+    setNotes(notes.filter((note) => note.id !== id));
   }
 
   return (
@@ -52,7 +67,9 @@ export function NoteSidebar() {
               key={note.id}
               className="relative bg-[#2c2c2e] p-4 rounded-xl border border-[#3a3a3c] shadow-[0_2px_6px_rgba(0,0,0,0.2)]"
             >
-              <div className="text-sm text-[#9e9e9f] mb-1 font-mono">{note.timeRange}</div>
+              <div className="text-sm text-[#9e9e9f] mb-1 font-mono">
+                {note.timeRange}
+              </div>
               <div className="text-base leading-relaxed">{note.content}</div>
               <button
                 onClick={() => handleDelete(note.id)}

@@ -34,3 +34,11 @@ export async function deleteNote(id: number): Promise<void> {
   const db = await dbPromise;
   await db.delete(STORE_NAME, id);
 }
+
+export async function clearAllNotes(): Promise<void> {
+  const db = await dbPromise;
+  const tx = db.transaction("notes", "readwrite");
+  const store = tx.objectStore("notes");
+  await store.clear();
+  await tx.done;
+}
