@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
 import { Button } from "./ui/button";
+import { useSound } from "react-sounds";
+import { requestNotificationPermission } from "@/lib/notification";
 
 export default function Timer() {
   const [duration, setDuration] = useState(3600000);
@@ -8,12 +10,21 @@ export default function Timer() {
   const [remainingTime, setRemainingTime] = useState(3600000);
   const [isRunning, setIsRunning] = useState(false);
   const intervalRef = useRef(setInterval(() => {}, 1000));
+  const reminderRef = useRef(true);
 
+const { play } = useSound('notification/info');
   const runTimer = (end: number) => {
     intervalRef.current = setInterval(() => {
       const timeleft = end - Date.now();
+      if (timeleft <= 120000 && reminderRef.current) {
+        reminderRef.current = false;
+        play();
+        new Notification("2mins left! Time to note down!");
+      }
       if (timeleft <= 0) {
+        play();
         resetTimer();
+        new Notification("Time's up!");
         return;
       }
       setRemainingTime(timeleft);
@@ -29,6 +40,12 @@ export default function Timer() {
     setEndTime(end);
     setRemainingTime(end - now);
     runTimer(end);
+    requestNotificationPermission().then((permission) => {
+      if (permission === "granted") {
+        console.log("Notification permission granted");
+        new Notification("Notification permission granted");
+      }
+    });
   };
 
   const resetTimer = () => {
@@ -38,6 +55,7 @@ export default function Timer() {
     setEndTime(0);
     setDuration(3600000);
     setRemainingTime(3600000);
+    reminderRef.current = true;
   };
 
   const formatTime = (ms: number) => {
@@ -49,15 +67,15 @@ export default function Timer() {
 
   const increaseTime = () => {
     if (!isRunning) {
-      const updated = duration + 60000;
+      const updated = duration + 300000;
       setDuration(updated);
       setRemainingTime(updated);
     }
   };
 
   const decreaseTime = () => {
-    if (!isRunning && duration >= 60000) {
-      const updated = duration - 60000;
+    if (!isRunning && duration >= 300000) {
+      const updated = duration - 300000;
       setDuration(updated);
       setRemainingTime(updated);
     }
@@ -69,8 +87,8 @@ export default function Timer() {
       <h1 className="text-2xl font-bold text-zinc-800 dark:text-white">Timer</h1>
 
       <div className="flex gap-4">
-        <Button variant="outline" onClick={increaseTime} disabled={isRunning}>+1 min</Button>
-        <Button variant="outline" onClick={decreaseTime} disabled={isRunning}>-1 min</Button>
+        <Button variant="outline" onClick={increaseTime} disabled={isRunning}>+5 min</Button>
+        <Button variant="outline" onClick={decreaseTime} disabled={isRunning}>-5 min</Button>
       </div>
 
       <div className="flex flex-col items-center">
